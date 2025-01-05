@@ -2,8 +2,8 @@ import api from "./api.access";
 
 //@ Obtener todos los productos:
 export const fetchAllProducts = async () => {
-    const response = await api.get(`/products`);
-    return response.data;
+    const { data } = await api.get(`/products`);
+    return data;
 };
 
 //( Obtener un producto por su ID:
@@ -13,9 +13,9 @@ export const fetchProductById = async (id) => {
 };
 
 //$ Crear un producto:
-export const createProduct = async (clientData) => {
-    await api.post(`/products`, clientData);
-    return
+export const createProduct = async (productData) => {
+    const { data } = await api.post(`/products`, productData);
+    return data;
 };
 
 //% Actualizar un producto:

@@ -16,62 +16,70 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { useForm, Controller } from "react-hook-form";
+import { createProduct } from "@/services/products.service";
 
-export const ProductoModal = ({ open, handleClose }) => {
+export const CreateProductoModal = ({ open, handleClose }) => {
 	const { control, handleSubmit, reset } = useForm({
 		defaultValues: {
-			codigo_barras: "",
-			nombre_producto: "",
-			precio_venta: "",
-			stock_disponible: "",
-			stock_minimo: "",
+			codigoBarras: "",
+			nombreProducto: "",
+			precioVenta: "",
+			stockMinimo: "",
 		},
 	});
 
 	const [alert, setAlert] = useState({ type: "", message: "", visible: false });
 
+	// Mostrar alerta con un tiempo de expiración
+	const showAlert = (type, message) => {
+		setAlert({ type, message, visible: true });
+		setTimeout(() => setAlert({ type: "", message: "", visible: false }), 3000);
+	};
+
+	const renderAlert = () => {
+		if (!alert.visible) return null;
+		return (
+			<Alert severity={alert.type} sx={{ m: 2 }}>
+				<AlertTitle sx={{ fontWeight: 600 }}>
+					{alert.type === "success" ? "Éxito" : "Error"}
+				</AlertTitle>
+				{alert.message}
+			</Alert>
+		);
+	};
+
 	const handleFormSubmit = async (data) => {
 		try {
-			console.log("Datos del producto:", data); // Reemplaza esto con tu lógica para enviar los datos al backend.
-			setAlert({
-				type: "success",
-				message: "Producto guardado exitosamente.",
-				visible: true,
-			});
+			const newProduct = await createProduct(data);
+			showAlert("success", "Producto guardado exitosamente.");
 
 			// Limpiar formulario y cerrar modal después de un tiempo
 			setTimeout(() => {
 				reset();
-				setAlert({ type: "", message: "", visible: false });
-				handleClose();
+				handleClose(newProduct);
 			}, 3000);
 		} catch (error) {
 			console.error("Error al guardar el producto:", error);
-			setAlert({
-				type: "error",
-				message: "Hubo un problema al guardar el producto.",
-				visible: true,
-			});
-			setTimeout(() => setAlert({ type: "", message: "", visible: false }), 3000);
+			showAlert("error", "Hubo un problema al guardar el producto.");
 		}
 	};
 
 	return (
-		<Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+		<Dialog open={open} onClose={() => handleClose()} maxWidth="sm" fullWidth>
 			<DialogTitle>
 				<Box display="flex" justifyContent="space-between" alignItems="center">
 					<Typography variant="h6">Agregar Producto</Typography>
-					<IconButton onClick={handleClose}>
+					<IconButton onClick={() => handleClose()}>
 						<CloseIcon />
 					</IconButton>
 				</Box>
 			</DialogTitle>
 
-			<DialogContent dividers>
-				<form id="producto-form" onSubmit={handleSubmit(handleFormSubmit)}>
+			<form id="producto-form" onSubmit={handleSubmit(handleFormSubmit)}>
+				<DialogContent dividers>
 					<Box display="flex" flexDirection="column" gap={2}>
 						<Controller
-							name="codigo_barras"
+							name="codigoBarras"
 							control={control}
 							rules={{ required: "El código de barras es obligatorio." }}
 							render={({ field, fieldState }) => (
@@ -84,8 +92,9 @@ export const ProductoModal = ({ open, handleClose }) => {
 								/>
 							)}
 						/>
+
 						<Controller
-							name="nombre_producto"
+							name="nombreProducto"
 							control={control}
 							rules={{ required: "El nombre del producto es obligatorio." }}
 							render={({ field, fieldState }) => (
@@ -98,8 +107,9 @@ export const ProductoModal = ({ open, handleClose }) => {
 								/>
 							)}
 						/>
+
 						<Controller
-							name="precio_venta"
+							name="precioVenta"
 							control={control}
 							rules={{
 								required: "El precio de venta es obligatorio.",
@@ -117,27 +127,9 @@ export const ProductoModal = ({ open, handleClose }) => {
 								/>
 							)}
 						/>
+
 						<Controller
-							name="stock_disponible"
-							control={control}
-							rules={{
-								required: "El stock disponible es obligatorio.",
-								min: { value: 0, message: "El stock debe ser mayor o igual a 0." },
-							}}
-							render={({ field, fieldState }) => (
-								<TextField
-									{...field}
-									label="Stock Disponible"
-									type="number"
-									fullWidth
-									inputProps={{ min: 0 }}
-									error={!!fieldState.error}
-									helperText={fieldState.error?.message}
-								/>
-							)}
-						/>
-						<Controller
-							name="stock_minimo"
+							name="stockMinimo"
 							control={control}
 							rules={{
 								required: "El stock mínimo es obligatorio.",
@@ -156,26 +148,19 @@ export const ProductoModal = ({ open, handleClose }) => {
 							)}
 						/>
 					</Box>
-				</form>
-			</DialogContent>
+				</DialogContent>
 
-			<DialogActions>
-				<Button onClick={handleClose} color="inherit">
-					Cerrar
-				</Button>
-				<Button form="producto-form" type="submit" variant="contained" color="primary">
-					Guardar
-				</Button>
-			</DialogActions>
+				{renderAlert()}
 
-			{alert.visible && (
-				<Alert severity={alert.type} sx={{ m: 2 }}>
-					<AlertTitle sx={{ fontWeight: 600 }}>
-						{alert.type === "success" ? "Éxito" : "Error"}
-					</AlertTitle>
-					{alert.message}
-				</Alert>
-			)}
+				<DialogActions>
+					<Button onClick={() => handleClose()} color="inherit">
+						Cerrar
+					</Button>
+					<Button form="producto-form" type="submit" variant="contained" color="primary">
+						Guardar
+					</Button>
+				</DialogActions>
+			</form>
 		</Dialog>
 	);
 };
