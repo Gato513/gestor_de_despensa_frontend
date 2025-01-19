@@ -13,7 +13,7 @@ import {
 	Card,
 	Link,
 } from "@mui/material";
-import { ForgotPasswordModal } from "@/components/modals/forgotPassword";
+import { ForgotPasswordModal } from "@/components/modals/mainModals/forgotPassword";
 
 export function LoginForm() {
 	const [errors, setErrors] = useState({ email: "", password: "", session: "" });
@@ -49,8 +49,7 @@ export function LoginForm() {
 
 		try {
 			const response = await login(data);
-			console.log(response);
-			if (!response.ok) throw new Error(response.message || "Error al iniciar sesión");
+			// if (!response.ok) throw new Error(response.message || "Error al iniciar sesión");
 			router.push("/panel");
 		} catch (error) {
 			setErrors((prevErrors) => ({

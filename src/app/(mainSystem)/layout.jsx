@@ -1,16 +1,22 @@
 import Box from "@mui/material/Box";
 import { Sidebar } from "@/components/nav/sidebar.jsx";
 import { CssBaseline } from "@mui/material";
+import { UserProvider } from "@/context/UserContext";
+import { StockAlert } from "@/components/alerts/stockAlert";
 import styles from "./MainLayout.module.css";
 
-export default function MainLayout({ children }) {
+export default function MainLayout({ children, stockInfo }) {
 	return (
-		<Box sx={{ display: "flex", height: "100%" }}>
-			<CssBaseline />
-			<Sidebar />
-			<main className={styles.main}>
-				<Box className={styles.content}>{children}</Box>
-			</main>
-		</Box>
+		<UserProvider>
+			<Box sx={{ display: "flex", height: "100%" }}>
+				<CssBaseline />
+				<Sidebar />
+				<main className={styles.main}>
+					<Box className={styles.content}>{children}</Box>
+				</main>
+				{/* Componente de Alerta */}
+				<StockAlert />
+			</Box>
+		</UserProvider>
 	);
 }

@@ -6,14 +6,10 @@ export const fetchAllRemitos = async () => {
     return data;
 };
 
+//@ Obtener todos los remitos de un cliente:
 export const searchAllCustomerRemitos = async (clientId) => {
-    // const { data } = await api.get(`/remitos/byClient/${clientId}`);
-    return [
-        { id_remito: 1, fecha_remito: "2024-01-01", saldo_restante: 100, monto_total: 100, estado: "Pendiente" },
-        { id_remito: 2, fecha_remito: "2024-01-05", saldo_restante: 10,  monto_total: 10, estado: "Pendiente" },
-        { id_remito: 3, fecha_remito: "2024-01-10", saldo_restante: 100, monto_total: 100, estado: "Pendiente" },
-        { id_remito: 4, fecha_remito: "2024-01-11", saldo_restante: 100, monto_total: 100, estado: "Pendiente" },
-    ];
+    const { data } = await api.get(`/remitos/byClient/${clientId}`);
+    return data;
 }
 
 //@ Obtener un remito por su ID:

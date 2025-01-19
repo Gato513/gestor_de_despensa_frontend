@@ -22,6 +22,38 @@ import { createCustomer } from "@/services/customers.service";
 import { useForm, Controller } from "react-hook-form";
 import CloseIcon from "@mui/icons-material/Close";
 import Image from "next/image";
+import generateKey from "@/util/generateKey";
+
+const renderCustomerFields = (control) => (
+	<Box sx={{ border: "1px solid #E0E0E0", p: 2, borderRadius: "8px", mb: 2 }}>
+		<Typography sx={{ fontWeight: 600, color: "#7055F5", mb: 2 }}>Datos personales</Typography>
+		<Divider sx={{ my: 2 }} />
+		<Grid2 container spacing={2}>
+			{[
+				{ name: "nombreCliente", label: "Nombre Cliente", required: true },
+				{ name: "telefonoCliente", label: "Teléfono Cliente", required: true },
+				{ name: "direccionCliente", label: "Dirección del Cliente", required: true },
+			].map(({ name, label, required }) => (
+				<Controller
+					key={generateKey(name)}
+					name={name}
+					control={control}
+					rules={required ? { required: `${label} es obligatorio.` } : {}}
+					render={({ field, fieldState: { error } }) => (
+						<TextField
+							{...field}
+							label={label}
+							error={!!error}
+							helperText={error?.message || ""}
+							required={required}
+							fullWidth
+						/>
+					)}
+				/>
+			))}
+		</Grid2>
+	</Box>
+);
 
 export const CreateCustomerModal = ({ open, handleClose }) => {
 	const { control, handleSubmit, reset } = useForm({
@@ -39,17 +71,6 @@ export const CreateCustomerModal = ({ open, handleClose }) => {
 		setTimeout(() => setAlert({ type: "", message: "", visible: false }), 3000);
 	};
 
-	const handleFormSubmit = async (data) => {
-		try {
-			await createCustomer(data);
-			reset();
-			showAlert("success", "El nuevo cliente ha sido agregado correctamente.");
-		} catch (error) {
-			console.error("Error al guardar el cliente:", error);
-			showAlert("error", "Hubo un problema al guardar el cliente.");
-		}
-	};
-
 	const renderAlert = () => {
 		if (!alert.visible) return null;
 		return (
@@ -62,41 +83,25 @@ export const CreateCustomerModal = ({ open, handleClose }) => {
 		);
 	};
 
-	const renderCustomerFields = () => (
-		<Box sx={{ border: "1px solid #E0E0E0", p: 2, borderRadius: "8px", mb: 2 }}>
-			<Typography sx={{ fontWeight: 600, color: "#7055F5", mb: 2 }}>Datos personales</Typography>
-			<Divider sx={{ my: 2 }} />
-			<Grid2 container spacing={2}>
-				{[
-					{ name: "nombreCliente", label: "Nombre Cliente", required: true },
-					{ name: "telefonoCliente", label: "Teléfono Cliente", required: true },
-					{ name: "direccionCliente", label: "Dirección del Cliente", required: true },
-				].map(({ name, label, required }) => (
-					<Controller
-						key={name}
-						name={name}
-						control={control}
-						rules={required ? { required: `${label} es obligatorio.` } : {}}
-						render={({ field, fieldState: { error } }) => (
-							<TextField
-								{...field}
-								label={label}
-								error={!!error}
-								helperText={error?.message || ""}
-								required={required}
-								fullWidth
-							/>
-						)}
-					/>
-				))}
-			</Grid2>
-		</Box>
+	// Manejo del envío del formulario
+	const handleFormSubmit = async (data) => {
+		try {
+			const newClient = await createCustomer(data);
+			showAlert("success", "El nuevo cliente ha sido agregado correctamente.");
 
-	);
+			// Limpiar formulario y cerrar modal después de un tiempo
+			setTimeout(() => {
+				reset();
+				handleClose(newClient);
+			}, 3000);
+		} catch (error) {
+			console.error("Error al guardar el cliente:", error);
+			showAlert("error", "Hubo un problema al guardar el cliente.");
+		}
+	};
 
 	return (
 		<Dialog
-			onClose={handleClose}
 			aria-labelledby="create-customer-modal-title"
 			open={open}
 			maxWidth="md"
@@ -114,7 +119,7 @@ export const CreateCustomerModal = ({ open, handleClose }) => {
 				</Box>
 				<IconButton
 					aria-label="close"
-					onClick={handleClose}
+					onClick={() => { handleClose() }}
 					sx={(theme) => ({
 						position: "absolute",
 						right: 8,
@@ -129,18 +134,20 @@ export const CreateCustomerModal = ({ open, handleClose }) => {
 			<form id="customer-form" onSubmit={handleSubmit(handleFormSubmit)}>
 				<DialogContent dividers>
 					<LocalizationProvider dateAdapter={AdapterDayjs}>
-						{renderCustomerFields()}
+						{renderCustomerFields(control)}
 					</LocalizationProvider>
 				</DialogContent>
+
 				<DialogActions>
 					<Button
-						onClick={handleClose}
+						onClick={() => { handleClose() }}
 						color="inherit"
 						sx={{ fontWeight: "600" }}
 						variant="text"
 					>
 						Cerrar
 					</Button>
+
 					<Button
 						type="submit"
 						variant="contained"

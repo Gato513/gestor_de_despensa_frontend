@@ -1,8 +1,21 @@
 import api from "./api.access";
 
-//@ Obtener todos los productos:
-export const fetchAllProducts = async () => {
-    const { data } = await api.get(`/products`);
+//@ Obtener productos con filtro opcional por estado:
+export const fetchAllProducts = async (estado = "") => {
+    const url = estado ? `/products?estado=${estado}` : `/products`;
+    const { data } = await api.get(url);
+    return data;
+};
+
+//@ Obtener productos filtrados:
+export const fetchFilteredProducts = async (filters) => {
+    const { data } = await api.get(`/products/filter`, filters);
+    return data;
+};
+
+//@ Obtener comprobacion de stock minimo:
+export const minimumStockControl = async () => {
+    const { data } = await api.get("/products/minimumStockControl");
     return data;
 };
 
@@ -29,9 +42,3 @@ export const deleteProduct = async (id) => {
     const response = await api.delete(`/products/${id}`);
     return response.data;
 };
-
-// & Compra de productos:
-export const PurchaseProduct = async (purchaseData) => {
-    const { data } = await api.post('/products/purchase', purchaseData);
-    return data;
-}

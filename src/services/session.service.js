@@ -1,17 +1,27 @@
 import api from '@/services/api.access';
 
 // Función de sesión
-export const login = async (data) => {
-  const response = await api.post(`/session/login`, data);
-  return response.data;
+export const login = async (dataLogin) => {
+  const { data } = await api.post(`/session/login`, dataLogin);
+  return data;
+};
+
+export const getLoginUser = async () => {
+  try {
+    const { data } = await api.get(`/session/getLoginUser`);
+    return data; // Retorna { nombre_usuario, role }
+  } catch (error) {
+    console.error("Error obteniendo la información del usuario:", error);
+    return null;
+  }
 };
 
 export const passwordResetToken = async (params = {}) => {
-  const response = await api.get(`/user/passwordReset`, { params });
-  return response.data;
+  const { data } = await api.get(`/user/passwordReset`, { params });
+  return data;
 };
 
-export const passwordReset = async (data) => {
-  const response = await api.patch(`/user/passwordReset`, data);
-  return response.data;
+export const passwordReset = async (passwordResetData) => {
+  const { data } = await api.patch(`/user/passwordReset`, passwordResetData);
+  return data;
 };

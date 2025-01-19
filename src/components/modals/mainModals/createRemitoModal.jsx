@@ -9,8 +9,6 @@ import {
 	Typography,
 	Divider,
 	MenuItem,
-	Grid,
-	Grid2,
 	Table,
 	TableBody,
 	TableCell,
@@ -23,12 +21,16 @@ import {
 	AlertTitle,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import AddIcon from '@mui/icons-material/Add';
+import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import Image from "next/image";
 import { useForm, Controller } from "react-hook-form";
 import { useEffect, useState } from "react";
 import { createRemito } from "@/services/remitos.service";
 import { fetchAllCustomers } from "@/services/customers.service";
 import { fetchAllProducts } from "@/services/products.service";
+import { CreateCustomerModal } from "./customerModal";
+import generateKey from "@/util/generateKey";
 
 // Funciónes para calcular el total y el stock de productos seleccionados:
 const calculateStock = (available, quantity) => available - quantity;
@@ -73,7 +75,7 @@ const ResumenProductos = ({ productos, montoTotal }) => (
 				</TableHead>
 				<TableBody>
 					{productos.map((producto, index) => (
-						<TableRow key={index}>
+						<TableRow key={generateKey(index)}>
 							<TableCell>{producto.nombre_producto}</TableCell>
 							<TableCell>{producto.cantidad}</TableCell>
 							<TableCell>${producto.subtotal.toFixed(2)}</TableCell>
@@ -102,7 +104,12 @@ const useFetchData = () => {
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
-				const [dataClients, dataProducts] = await Promise.all([fetchAllCustomers(), fetchAllProducts()]);
+				const [dataClients, dataProducts] = await Promise.all(
+					[
+						fetchAllCustomers(),
+						fetchAllProducts("readyProducts") //! readyProducts trae los productos listos para la venta evitando los que no tienen STOCK.
+					]
+				);
 				setClientes(dataClients);
 				setProductos(dataProducts);
 				setIsLoaded(true);
@@ -113,7 +120,12 @@ const useFetchData = () => {
 		fetchData();
 	}, []);
 
-	return { clientes, productos, setProductos, isLoaded };
+	return { clientes, setClientes, productos, setProductos, isLoaded };
+};
+
+// Agregar un nuevo ítem a la lista de clientes:
+const handleAddingNewItem = (newData, setItemList) => {
+	setItemList((prevData) => [...prevData, newData]);
 };
 
 export const CreateRemitoModal = ({ open, handleClose }) => {
@@ -131,15 +143,15 @@ export const CreateRemitoModal = ({ open, handleClose }) => {
 	const productoActualID = watch("producto");
 	const cantidad = parseInt(watch("cantidad"), 10) || 1;
 
-	const { clientes, productos, setProductos, isLoaded } = useFetchData();
+	const { clientes, setClientes, productos, setProductos, isLoaded } = useFetchData();
 	const [alert, setAlert] = useState({ type: "", message: "", visible: false });
+	const [openClientModal, setOpenClientModal] = useState(false);
 
 	// Mostrar alerta con un tiempo de expiración
 	const showAlert = (type, message) => {
 		setAlert({ type, message, visible: true });
 		setTimeout(() => {
 			setAlert({ type: "", message: "", visible: false });
-			handleClose();
 		}, 3000);
 	};
 
@@ -155,6 +167,14 @@ export const CreateRemitoModal = ({ open, handleClose }) => {
 
 
 		);
+	};
+
+	const toggleClientModal = (newClient = null) => {
+		if (newClient) {
+			handleAddingNewItem(newClient, setClientes);
+			setValue("cliente", newClient.id_cliente);
+		}
+		setOpenClientModal(!openClientModal);
 	};
 
 	const addProductToList = () => {
@@ -205,6 +225,11 @@ export const CreateRemitoModal = ({ open, handleClose }) => {
 		setValue("cantidad", 1);
 	};
 
+	const handleModalClosure = () => {
+		reset();
+		handleClose();
+	}
+
 	const handleSubmitForm = async ({ cliente, productosSeleccionados }) => {
 		if (!cliente || productosSeleccionados.length === 0) {
 			showAlert("warning", "Debes seleccionar un Cliente y agregar al menos un producto.");
@@ -213,10 +238,11 @@ export const CreateRemitoModal = ({ open, handleClose }) => {
 
 		const remitoData = {
 			clientId: cliente,
-			productosVendidos: productosSeleccionados.map(({ id_producto, cantidad, subtotal }) => ({
+			productosVendidos: productosSeleccionados.map(({ id_producto, cantidad, subtotal, stock_disponible }) => ({
 				productId: id_producto,
 				cantidad,
 				subtotal,
+				stockActual: stock_disponible
 			})),
 			montoTotal: calcularTotal(productosSeleccionados),
 		};
@@ -233,120 +259,126 @@ export const CreateRemitoModal = ({ open, handleClose }) => {
 	};
 
 	return isLoaded && (
-		<Dialog onClose={handleClose} open={open} maxWidth="md" fullWidth>
-			<DialogTitle sx={{ m: 0, p: 2 }}>
-				<Box display="flex" alignItems="center" gap={1}>
-					<Image src="/assets/referir.png" alt="Nuevo Remito" width={24} height={24} />
-					<Typography variant="h6">Formulario de Creación de Remitos</Typography>
-				</Box>
-				<IconButton aria-label="close" onClick={handleClose} sx={{ position: "absolute", right: 8, top: 8 }}>
-					<CloseIcon />
-				</IconButton>
-			</DialogTitle>
+		<>
+			<Dialog open={open} maxWidth="md" fullWidth>
+				<DialogTitle sx={{ m: 0, p: 2 }}>
+					<Box display="flex" alignItems="center" gap={1}>
+						<Image src="/assets/referir.png" alt="Nuevo Remito" width={24} height={24} />
+						<Typography variant="h6">Formulario de Creación de Remitos</Typography>
+					</Box>
+					<IconButton aria-label="close" onClick={handleClose} sx={{ position: "absolute", right: 8, top: 8 }}>
+						<CloseIcon />
+					</IconButton>
+				</DialogTitle>
 
-			<form id="remito-form" onSubmit={handleSubmit(handleSubmitForm)}>
-				<DialogContent dividers>
-					<Box sx={{ p: 2 }}>
-						<Box sx={{ border: "1px solid #E0E0E0", p: 2, borderRadius: "8px", mb: 2 }}>
-							<Typography sx={{ fontWeight: 600, color: "#7055F5" }}>Datos del Remito</Typography>
+				<form id="remito-form" onSubmit={handleSubmit(handleSubmitForm)}>
+					<DialogContent dividers>
+						<Box sx={{ p: 2 }}>
+							<Box sx={{ border: "1px solid #E0E0E0", p: 2, borderRadius: "8px", mb: 2 }}>
+								<Typography sx={{ fontWeight: 600, color: "#7055F5" }}>Datos del Remito</Typography>
 
-							<Divider sx={{ my: 2 }} />
+								<Divider sx={{ my: 2 }} />
 
-							{/* Selector de Clientes */}
-							<Box display="flex" gap={1} mb={2}>
-								<Controller
-									name="cliente"
-									control={control}
-									rules={{ required: "El cliente es obligatorio." }}
-									render={({ field }) => (
-										<TextField {...field} label="Cliente" select fullWidth>
-											{clientes.length === 0 ? (
-												<MenuItem disabled>
-													No hay proveedores disponibles. Crea uno nuevo.
-												</MenuItem>
-											) : (
-												clientes.map((cliente) => (
-													<MenuItem key={cliente.id_cliente} value={cliente.id_cliente}>
-														{cliente.nombre_cliente}
-													</MenuItem>
-												))
-											)}
-										</TextField>
-									)}
-								/>
-							</Box>
-
-							{/* Selector de productos */}
-							<Box display="flex" gap={1} mb={2}>
-								<Controller
-									name="producto"
-									control={control}
-									render={({ field }) => (
-										<TextField {...field} label="Producto" select fullWidth>
-											{productos.length === 0 ? (
-												<MenuItem disabled>
-													No hay productos disponibles. Crea uno nuevo.
-												</MenuItem>
-											) : (
-												productos.map((producto) => (
-													<MenuItem key={producto.id_producto} value={producto.id_producto}>
-														{producto.nombre_producto}
-													</MenuItem>
-												))
-											)}
-										</TextField>
-									)}
-								/>
-							</Box>
-
-							{/* Campo de cantidad y botón para agregar */}
-							{productoActualID && (
+								{/* Selector de Clientes */}
 								<Box display="flex" gap={1} mb={2}>
 									<Controller
-										name="cantidad"
+										name="cliente"
 										control={control}
+										rules={{ required: "El cliente es obligatorio." }}
 										render={({ field }) => (
-											<TextField {...field} label="Cantidad" type="number" fullWidth />
+											<TextField {...field} label="Cliente" select fullWidth>
+												{clientes.length === 0 ? (
+													<MenuItem disabled>
+														No hay clientes disponibles. Crea uno nuevo.
+													</MenuItem>
+												) : (
+													clientes.map((cliente) => (
+														<MenuItem key={generateKey(cliente.id_cliente)} value={cliente.id_cliente}>
+															{cliente.nombre_cliente}
+														</MenuItem>
+													))
+												)}
+											</TextField>
 										)}
 									/>
-									<Button
-										variant="contained"
-										color="primary"
-										onClick={addProductToList}
-										disabled={!productoActualID || cantidad <= 0}
-									>
-										Agregar
+									<Button variant="contained" color="success" onClick={() => toggleClientModal()}>
+										<AddIcon />
 									</Button>
 								</Box>
+
+								{/* Selector de productos */}
+								<Box display="flex" gap={1} mb={2}>
+									<Controller
+										name="producto"
+										control={control}
+										render={({ field }) => (
+											<TextField {...field} label="Producto" select fullWidth>
+												{productos.length === 0 ? (
+													<MenuItem disabled>
+														No hay productos disponibles. Crea uno nuevo.
+													</MenuItem>
+												) : (
+													productos.map((producto) => (
+														<MenuItem key={generateKey(producto.id_producto)} value={producto.id_producto}>
+															{producto.nombre_producto}
+														</MenuItem>
+													))
+												)}
+											</TextField>
+										)}
+									/>
+								</Box>
+
+								{/* Campo de cantidad y botón para agregar */}
+								{productoActualID && (
+									<Box display="flex" gap={1} mb={2}>
+										<Controller
+											name="cantidad"
+											control={control}
+											render={({ field }) => (
+												<TextField {...field} label="Cantidad" type="number" fullWidth />
+											)}
+										/>
+										<Button
+											variant="contained"
+											color="primary"
+											onClick={addProductToList}
+											disabled={!productoActualID || cantidad <= 0}
+										>
+											<AddShoppingCartIcon />
+										</Button>
+									</Box>
+								)}
+							</Box>
+
+							{productoActualID && (
+								<ProductoSeleccionado
+									producto={getCurrentProduct(productos, productoActualID)}
+									cantidad={cantidad}
+									addProductToList={addProductToList}
+								/>
+							)}
+
+							{renderAlert()}
+
+							{productosSeleccionados.length > 0 && (
+								<ResumenProductos productos={productosSeleccionados} montoTotal={calcularTotal(productosSeleccionados)} />
 							)}
 						</Box>
+					</DialogContent>
 
-						{productoActualID && (
-							<ProductoSeleccionado
-								producto={getCurrentProduct(productos, productoActualID)}
-								cantidad={cantidad}
-								addProductToList={addProductToList}
-							/>
-						)}
-
-						{renderAlert()}
-
-						{productosSeleccionados.length > 0 && (
-							<ResumenProductos productos={productosSeleccionados} montoTotal={calcularTotal(productosSeleccionados)} />
-						)}
-					</Box>
-				</DialogContent>
-
-				<DialogActions>
-					<Button onClick={handleClose} color="inherit" sx={{ fontWeight: 600 }}>
-						Cerrar
-					</Button>
-					<Button type="submit" variant="contained" sx={{ backgroundColor: "#5a3fd1", color: "white" }}>
-						Generar Remito
-					</Button>
-				</DialogActions>
-			</form>
-		</Dialog>
+					<DialogActions>
+						<Button onClick={handleModalClosure} color="inherit" sx={{ fontWeight: 600 }}>
+							Cerrar
+						</Button>
+						<Button type="submit" variant="contained" sx={{ backgroundColor: "#5a3fd1", color: "white" }}>
+							Generar Remito
+						</Button>
+					</DialogActions>
+				</form>
+			</Dialog>
+			{openClientModal && <CreateCustomerModal open={openClientModal} handleClose={toggleClientModal} />}
+		</>
 	);
 };
 

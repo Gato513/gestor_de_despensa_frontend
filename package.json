@@ -9,14 +9,18 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@date-io/dayjs": "^3.2.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@mui/icons-material": "^6.1.10",
+    "@mui/lab": "^6.0.0-beta.23",
     "@mui/material": "^6.2.0",
-    "@mui/x-date-pickers": "^7.23.2",
+    "@mui/x-date-pickers": "^7.24.0",
+    "@mui/x-date-pickers-pro": "^7.24.0",
     "axios": "^1.7.9",
+    "date-fns": "^4.1.0",
     "dayjs": "^1.11.13",
-    "next": "15.0.4",
+    "next": "^15.1.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.54.1"

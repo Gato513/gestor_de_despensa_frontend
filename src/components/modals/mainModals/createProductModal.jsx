@@ -19,14 +19,18 @@ import { useForm, Controller } from "react-hook-form";
 import { createProduct } from "@/services/products.service";
 
 export const CreateProductoModal = ({ open, handleClose }) => {
-	const { control, handleSubmit, reset } = useForm({
+	const { control, handleSubmit, reset, watch } = useForm({
 		defaultValues: {
 			codigoBarras: "",
 			nombreProducto: "",
-			precioVenta: "",
+			precioVenta: 0,
+			precioCompra: 0,
 			stockMinimo: "",
 		},
 	});
+
+	const precioVenta = parseInt(watch("precioVenta"));
+	const precioCompra = parseInt(watch("precioCompra"));
 
 	const [alert, setAlert] = useState({ type: "", message: "", visible: false });
 
@@ -49,19 +53,25 @@ export const CreateProductoModal = ({ open, handleClose }) => {
 	};
 
 	const handleFormSubmit = async (data) => {
-		try {
-			const newProduct = await createProduct(data);
-			showAlert("success", "Producto guardado exitosamente.");
 
-			// Limpiar formulario y cerrar modal después de un tiempo
-			setTimeout(() => {
-				reset();
-				handleClose(newProduct);
-			}, 3000);
-		} catch (error) {
-			console.error("Error al guardar el producto:", error);
-			showAlert("error", "Hubo un problema al guardar el producto.");
+		if (precioVenta < precioCompra){
+			showAlert("error", "El precio venta no puede se menor al precio compra.");
+			return
 		}
+
+		try {
+				const newProduct = await createProduct(data);
+				showAlert("success", "Producto guardado exitosamente.");
+
+				// Limpiar formulario y cerrar modal después de un tiempo
+				setTimeout(() => {
+					reset();
+					handleClose(newProduct);
+				}, 3000);
+			} catch (error) {
+				console.error("Error al guardar el producto:", error);
+				showAlert("error", "Hubo un problema al guardar el producto.");
+			}
 	};
 
 	return (
@@ -121,7 +131,27 @@ export const CreateProductoModal = ({ open, handleClose }) => {
 									label="Precio de Venta"
 									type="number"
 									fullWidth
-									inputProps={{ min: 0, step: "0.01" }}
+									inputProps={{ min: 0, step: 1 }}
+									error={!!fieldState.error}
+									helperText={fieldState.error?.message}
+								/>
+							)}
+						/>
+
+						<Controller
+							name="precioCompra"
+							control={control}
+							rules={{
+								required: "El precio de compra es obligatorio.",
+								min: { value: 0, message: "El precio debe ser mayor o igual a 0." },
+							}}
+							render={({ field, fieldState }) => (
+								<TextField
+									{...field}
+									label="Precio de Compra"
+									type="number"
+									fullWidth
+									inputProps={{ min: 0, step: 1 }}
 									error={!!fieldState.error}
 									helperText={fieldState.error?.message}
 								/>
