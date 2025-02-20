@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { Alert, Snackbar } from "@mui/material";
-import Link from "next/link";
 import { minimumStockControl } from "@/services/products.service";
 
 // Hook personalizado para obtener la información de stock
@@ -40,9 +39,7 @@ export const StockAlert = () => {
             open
             anchorOrigin={{ vertical: "top", horizontal: "right" }}
             autoHideDuration={null} // La alerta permanecerá visible hasta que se haga clic
-            sx={{ cursor: "pointer" }}
         >
-            <Link href="/productos">
                 <Alert
                     severity="warning"
                     sx={{ cursor: "pointer" }}
@@ -50,9 +47,8 @@ export const StockAlert = () => {
                     tabIndex={0} // Hace el componente accesible por teclado
                 >
                     Hay {stockInfo.productQuantityReplenish || 0} productos con stock bajo.
-                    Haga clic aquí para más detalles.
+                    Mas Informacion en Productos
                 </Alert>
-            </Link>
         </Snackbar>
     );
 };

@@ -1,18 +1,12 @@
 "use client";
-import Box from "@mui/material/Box";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
-import TablePagination from "@mui/material/TablePagination";
-import TableRow from "@mui/material/TableRow";
-import Paper from "@mui/material/Paper";
-import { useUser } from "@/context/UserContext";
 import { useMemo, useState } from "react";
+import { Box, Table, TableBody, TableCell, TableContainer, TablePagination, TableRow, Paper } from "@mui/material";
 import { ProgressIndicator } from "@/components/progressIndicator/progressIndicator";
-import { EnhancedTableHead } from "./enhancedTableHead";
+import { EnhancedTableHead } from "@/components/tables/enhancedTableHead";
+import { useUser } from "@/context/UserContext";
 import { capitalize } from "@/util/formatter";
 import generateKey from "@/util/generateKey";
+import { ActionButtons } from "../modals/accionsModals/actionButtons";
 
 function descendingComparator(a, b, orderBy) {
     if (b[orderBy] < a[orderBy]) return -1;
@@ -26,11 +20,11 @@ function getComparator(order, orderBy) {
         : (a, b) => -descendingComparator(a, b, orderBy);
 }
 
-export const DynamicTable = ({ rows, headOfColumns, accessToRows }) => {
+export const DynamicTable = ({ rows, headOfColumns, accessToRows, bottonConfig = null, handleModifyRows = null, numberOfRows = 5 }) => {
     const [order, setOrder] = useState("asc");
-    const [orderBy, setOrderBy] = useState("calories");
+    const [orderBy, setOrderBy] = useState("");
     const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(5);
+    const [rowsPerPage, setRowsPerPage] = useState(numberOfRows);
     const { user } = useUser();
 
     const handleRequestSort = (event, property) => {
@@ -58,7 +52,7 @@ export const DynamicTable = ({ rows, headOfColumns, accessToRows }) => {
         [order, orderBy, page, rowsPerPage, rows]
     );
 
-    if (!user) return <ProgressIndicator color="success" size={8} />;
+    if (!user) return <ProgressIndicator color="success" size={5} />;
 
     return (
         <Box sx={{ width: "100%" }}>
@@ -73,28 +67,43 @@ export const DynamicTable = ({ rows, headOfColumns, accessToRows }) => {
                             rowCount={rows.length}
                         />
                         <TableBody>
-                            {visibleRows.map((row, index) => {
-                                return (
+                            {visibleRows.length > 0 ? (
+                                visibleRows.map((row, index) => (
                                     <TableRow
                                         hover
                                         role="checkbox"
                                         tabIndex={-1}
                                         key={generateKey(index)}
                                     >
-                                        {accessToRows.map(accessName => {
-                                            return (
-                                                <TableCell key={generateKey(accessName)} >
-                                                    {
-                                                        ["estado", "userRole", "movimiento", "have_stock"].includes(accessName)
-                                                            ? capitalize(row[accessName])
-                                                            : row[accessName]
-                                                    }
-                                                </TableCell>
-                                            )
-                                        })}
+                                        {accessToRows.map(accessName => (
+                                            <TableCell key={generateKey(accessName)}>
+                                                {["estado", "userRole", "movimiento", "have_stock", "tipo_factura"].includes(accessName)
+                                                    ? capitalize(row[accessName])
+                                                    : row[accessName]}
+                                            </TableCell>
+                                        ))}
+
+                                        {bottonConfig && (
+                                            <TableCell sx={{ py: 0 }}>
+                                                <ActionButtons
+                                                    row={row}
+                                                    accessToRows={accessToRows}
+                                                    config={bottonConfig}
+                                                    handleModifyRows={handleModifyRows}
+                                                />
+                                            </TableCell>
+                                        )}
                                     </TableRow>
-                                );
-                            })}
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={accessToRows.length + (bottonConfig ? 1 : 0)}>
+                                        <Box textAlign="center" sx={{ py: 3, color: "gray" }}>
+                                            No se encontraron datos para mostrar.
+                                        </Box>
+                                    </TableCell>
+                                </TableRow>
+                            )}
                             {emptyRows > 0 && (
                                 <TableRow style={{ height: 53 * emptyRows }}>
                                     <TableCell colSpan={6} />
@@ -104,7 +113,7 @@ export const DynamicTable = ({ rows, headOfColumns, accessToRows }) => {
                     </Table>
                 </TableContainer>
                 <TablePagination
-                    rowsPerPageOptions={[5, 8]}
+                    rowsPerPageOptions={[1, 5, 7]}
                     component="div"
                     count={rows.length}
                     rowsPerPage={rowsPerPage}

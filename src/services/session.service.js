@@ -11,7 +11,6 @@ export const getLoginUser = async () => {
     const { data } = await api.get(`/session/getLoginUser`);
     return data; // Retorna { nombre_usuario, role }
   } catch (error) {
-    console.error("Error obteniendo la información del usuario:", error);
     return null;
   }
 };

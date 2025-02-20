@@ -20,12 +20,10 @@ export const createUser = async (clientData) => {
 
 //% Actualizar un Usuario:
 export const updateUser = async (id, data) => {
-    const response = await api.put(`/user/${id}`, data);
-    return response.data;
+    await api.put(`/user/${id}`, data);
 };
 
-//! Eliminar un Usuario:
-export const deleteUser = async (id) => {
-    const { data } = await api.delete(`/user/${id}`);
-    return data;
+//() Ocultar un Usuario:
+export const hideUser = async (id) => {
+    await api.patch(`/user/${id}`);
 };

@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import { Controller, useForm } from "react-hook-form";
 import { Box, Button, MenuItem, TextField, Typography } from "@mui/material";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -8,17 +8,21 @@ import SearchIcon from "@mui/icons-material/Search";
 import { DatePicker } from "@mui/x-date-pickers";
 import dayjs from "dayjs";
 import { DynamicTable } from "@/components/tables/dynamicTable";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import generateKey from "@/util/generateKey";
 import { capitalize } from "@/util/formatter";
 
-
-export const DynamicFilter = ({ filterConfig, rows, headOfColumns, accessToRows }) => {
+export const DynamicFilter = ({ filterConfig, rows, headOfColumns, accessToRows, handleModifyRows, bottonConfig = {} }) => {
     const { control, handleSubmit, reset } = useForm({
         defaultValues: filterConfig.defaultValues,
     });
 
-    const [filterRows, setFilterRows] = useState(rows);
+    const [filterRows, setFilterRows] = useState([]);
+
+    useEffect(() => {
+        setFilterRows(rows)
+    }, [rows])
+    
 
     const formReset = (e) => {
         reset();
@@ -41,7 +45,6 @@ export const DynamicFilter = ({ filterConfig, rows, headOfColumns, accessToRows 
         setFilterRows(filtered);
     };
 
-
     const renderField = ({ name, label, required, type, options, inputWidth }) => (
         <Controller
             key={generateKey(name)}
@@ -57,9 +60,8 @@ export const DynamicFilter = ({ filterConfig, rows, headOfColumns, accessToRows 
                     return (
                         <DatePicker
                             label={label}
-                            value={field.value ? dayjs(field.value, "YYYY/MM/DD") : null} // Aseguramos que el valor se formatee correctamente
+                            value={field.value ? dayjs(field.value, "YYYY/MM/DD") : null}
                             onChange={(newValue) => {
-                                // Convertir la fecha seleccionada al formato "YYYY/MM/DD"
                                 field.onChange(newValue ? newValue.format("YYYY/MM/DD") : null);
                             }}
                             render={(params) => (
@@ -101,7 +103,6 @@ export const DynamicFilter = ({ filterConfig, rows, headOfColumns, accessToRows 
     return (
         <>
             <Box display="flex" alignItems="left" sx={{ color: "#2f2467", my: 3 }}>
-                {/* <PeopleAltOutlinedIcon sx={{ mr: 2, fontSize: 40 }} /> */}
                 <Typography variant="h4" sx={{ fontWeight: 600 }}>
                     {filterConfig.filterName}
                 </Typography>
@@ -150,6 +151,8 @@ export const DynamicFilter = ({ filterConfig, rows, headOfColumns, accessToRows 
                 rows={filterRows}
                 headOfColumns={headOfColumns}
                 accessToRows={accessToRows}
+                bottonConfig={Object.keys(bottonConfig).length > 0 ? bottonConfig : null}
+                handleModifyRows={handleModifyRows}
             />
         </>
     );

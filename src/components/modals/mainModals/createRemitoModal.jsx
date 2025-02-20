@@ -19,8 +19,10 @@ import {
 	TextField,
 	Alert,
 	AlertTitle,
+	Tooltip,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from '@mui/icons-material/Add';
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import Image from "next/image";
@@ -52,7 +54,7 @@ const ProductoSeleccionado = ({ producto, cantidad, addProductToList }) => {
 
 			<Box sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}>
 				<Typography>Producto: {producto.nombre_producto}</Typography>
-				<Typography>Precio: {producto.precio_venta.toFixed(2)} gs</Typography>
+				<Typography>Precio: {producto.precio_venta.toFixed(0)} gs</Typography>
 				<Typography>Stock Disponible: {Math.max(stockActual, 0)}</Typography>
 			</Box>
 
@@ -60,7 +62,7 @@ const ProductoSeleccionado = ({ producto, cantidad, addProductToList }) => {
 	);
 };
 
-const ResumenProductos = ({ productos, montoTotal }) => (
+const ResumenProductos = ({ productos, montoTotal, deleteListItem }) => (
 	<Box sx={{ border: "1px solid #E0E0E0", p: 2, borderRadius: "8px", mb: 2 }}>
 		<Typography sx={{ fontWeight: 600, color: "#7055F5" }}>Resumen de Productos</Typography>
 		<Divider sx={{ my: 2 }} />
@@ -68,6 +70,7 @@ const ResumenProductos = ({ productos, montoTotal }) => (
 			<Table>
 				<TableHead>
 					<TableRow>
+						<TableCell>Accion</TableCell>
 						<TableCell>Producto</TableCell>
 						<TableCell>Cantidad</TableCell>
 						<TableCell>Subtotal</TableCell>
@@ -76,17 +79,24 @@ const ResumenProductos = ({ productos, montoTotal }) => (
 				<TableBody>
 					{productos.map((producto, index) => (
 						<TableRow key={generateKey(index)}>
+							<TableCell>
+								<Tooltip key={generateKey(index)} title={"Eliminar"}>
+									<IconButton color={"error"} onClick={() => deleteListItem(producto.id_producto)}>
+										<DeleteIcon />
+									</IconButton>
+								</Tooltip>
+							</TableCell>
 							<TableCell>{producto.nombre_producto}</TableCell>
 							<TableCell>{producto.cantidad}</TableCell>
-							<TableCell>${producto.subtotal.toFixed(2)}</TableCell>
+							<TableCell>{producto.subtotal.toFixed(0)} gs</TableCell>
 						</TableRow>
 					))}
 					<TableRow>
-						<TableCell colSpan={2} align="right">
-							<Typography sx={{ fontWeight: 600 }}>Total</Typography>
+						<TableCell colSpan={3} align="right">
+							<Typography sx={{ fontWeight: 1000 }}>Total:</Typography>
 						</TableCell>
 						<TableCell>
-							<Typography sx={{ fontWeight: 600 }}>${montoTotal.toFixed(2)}</Typography>
+							<Typography sx={{ fontWeight: 1000 }}>{montoTotal.toFixed(0)} gs</Typography>
 						</TableCell>
 					</TableRow>
 				</TableBody>
@@ -164,8 +174,6 @@ export const CreateRemitoModal = ({ open, handleClose }) => {
 				</AlertTitle>
 				{alert.message}
 			</Alert>
-
-
 		);
 	};
 
@@ -225,6 +233,30 @@ export const CreateRemitoModal = ({ open, handleClose }) => {
 		setValue("cantidad", 1);
 	};
 
+	const deleteListItem = (idElement) => {
+		// Buscar el producto a eliminar en la lista de productos seleccionados
+		const productToRemove = productosSeleccionados.find(
+			(producto) => producto.id_producto === idElement
+		);
+		if (!productToRemove) return; // Si no se encuentra, no se realiza ninguna acción
+
+		// Eliminar el producto de la lista de productos seleccionados
+		const updatedSelectedProducts = productosSeleccionados.filter(
+			(producto) => producto.id_producto !== idElement
+		);
+		setValue("productosSeleccionados", updatedSelectedProducts);
+
+		// Restaurar la cantidad eliminada al stock disponible en la lista original de productos
+		const productIndexInOriginalList = productos.findIndex(
+			(producto) => producto.id_producto === idElement
+		);
+		if (productIndexInOriginalList !== -1) {
+			const updatedProductos = [...productos];
+			updatedProductos[productIndexInOriginalList].stock_disponible += productToRemove.cantidad;
+			setProductos(updatedProductos);
+		}
+	};
+
 	const handleModalClosure = () => {
 		reset();
 		handleClose();
@@ -249,6 +281,8 @@ export const CreateRemitoModal = ({ open, handleClose }) => {
 
 		try {
 			await createRemito(remitoData);
+			// Refrescar la página
+			window.location.reload();
 			showAlert("success", "El remito ha sido creado correctamente.");
 			reset();
 
@@ -264,7 +298,7 @@ export const CreateRemitoModal = ({ open, handleClose }) => {
 				<DialogTitle sx={{ m: 0, p: 2 }}>
 					<Box display="flex" alignItems="center" gap={1}>
 						<Image src="/assets/referir.png" alt="Nuevo Remito" width={24} height={24} />
-						<Typography variant="h6">Formulario de Creación de Remitos</Typography>
+						<Typography variant="h6">Formulario de Venta de Productos</Typography>
 					</Box>
 					<IconButton aria-label="close" onClick={handleClose} sx={{ position: "absolute", right: 8, top: 8 }}>
 						<CloseIcon />
@@ -362,7 +396,7 @@ export const CreateRemitoModal = ({ open, handleClose }) => {
 							{renderAlert()}
 
 							{productosSeleccionados.length > 0 && (
-								<ResumenProductos productos={productosSeleccionados} montoTotal={calcularTotal(productosSeleccionados)} />
+								<ResumenProductos productos={productosSeleccionados} montoTotal={calcularTotal(productosSeleccionados)} deleteListItem={deleteListItem} />
 							)}
 						</Box>
 					</DialogContent>

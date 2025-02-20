@@ -1,20 +1,5 @@
 import { formatAsOption } from "@/util/formatter";
 
-// Configuración para columnas
-export const accessToRows = [
-    "id", "nombre_usuario", "numero_de_factura", "fecha", "hora", "monto", "movimiento"
-];
-
-export const headOfColumns = [
-    { id: 'id', label: 'Id' },
-    { id: 'nombre_usuario', label: 'Nombre del usuario' },
-    { id: 'numero_de_factura', label: 'Numero de factura' },
-    { id: 'fecha', label: 'Fecha transaccion' },
-    { id: 'hora', label: 'Hora transaccion' },
-    { id: 'monto', label: 'Monto de transaccion' },
-    { id: 'movimiento', label: 'Tipo de transaccion' },
-];
-
 // Configuración de filtros:
 export const defaultFilterConfig = {
     defaultValues: {
@@ -50,3 +35,25 @@ export const defaultFilterConfig = {
 export const generateDynamicInputs = (rows) => [
     { name: "nombre_usuario", label: "Nombre del Usuario", options: formatAsOption(rows, "nombre_usuario") },
 ];
+
+// Configuración para columnas
+export const accessToRows = [
+    "nombre_usuario", "numero_de_factura", "fecha", "hora", "monto", "movimiento"
+];
+
+export const headOfColumns = [
+    { id: 'nombre_usuario', label: 'Nombre del usuario' },
+    { id: 'numero_de_factura', label: 'Numero de factura' },
+    { id: 'fecha', label: 'Fecha transaccion' },
+    { id: 'hora', label: 'Hora transaccion' },
+    { id: 'monto', label: 'Monto de transaccion' },
+    { id: 'movimiento', label: 'Tipo de transaccion' },
+
+];
+
+// Configuración botones de accion:
+export const bottonActionConfig = {
+    page: "caja",
+    allowedButtons: [],
+    accessId: "id"
+}

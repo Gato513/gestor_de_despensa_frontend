@@ -19,7 +19,7 @@ export const minimumStockControl = async () => {
     return data;
 };
 
-//( Obtener un producto por su ID:
+//@ Obtener un producto por su ID:
 export const fetchProductById = async (id) => {
     const response = await api.get(`/products/${id}`);
     return response.data;
@@ -32,13 +32,11 @@ export const createProduct = async (productData) => {
 };
 
 //% Actualizar un producto:
-export const updateProduct = async (id, data) => {
-    const response = await api.put(`/products/${id}`, data);
-    return response.data;
+export const updateProduct = async (id, updateData) => {
+    await api.put(`/products/${id}`, updateData);
 };
 
-//! Eliminar un producto:
-export const deleteProduct = async (id) => {
-    const response = await api.delete(`/products/${id}`);
-    return response.data;
+//() Ocultar un producto:
+export const hideProduct = async (id) => {
+    await api.patch(`/products/${id}`);
 };

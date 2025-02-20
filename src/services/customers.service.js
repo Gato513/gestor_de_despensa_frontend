@@ -6,9 +6,9 @@ export const fetchAllCustomers = async () => {
     return data;
 };
 
-//( Obtener un cliente por su ID:
+//@ Obtener un cliente por su ID:
 export const fetchCustomerById = async (id) => {
-    const { data } = await api.get(`/customers/${id}`);
+    const { data } = await api.get(`/customer/${id}`);
     return data;
 };
 
@@ -20,12 +20,10 @@ export const createCustomer = async (clientData) => {
 
 //% Actualizar un cliente:
 export const updateCustomer = async (id, data) => {
-    const response = await api.put(`/customers/${id}`, data);
-    return response.data;
+    await api.put(`/customer/${id}`, data);
 };
 
-//! Eliminar un cliente:
-export const deleteCustomer = async (id) => {
-    const { data } = await api.delete(`/customers/${id}`);
-    return data;
+//() Ocultar un cliente:
+export const hideCliente = async (id) => {
+    await api.patch(`/customer/${id}`);
 };

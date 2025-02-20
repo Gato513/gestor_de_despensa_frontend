@@ -1,0 +1,65 @@
+.container {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 2rem;
+	border-radius: 2.5rem;
+	height: 100%;
+}
+
+.paper {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: 2rem;
+	gap: 2rem;
+	background: linear-gradient(135deg, #f0f0f0, #e6e6e6);
+	border-radius: 1rem;
+	border: 1px solid #e2e2e2;
+	transition: transform 0.3s, box-shadow 0.3s, background 0.3s;
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.paper:hover {
+	transform: scale(1.06);
+	box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2); /* Mayor profundidad al hacer hover */
+	background: linear-gradient(135deg, #e9ecef, #dee2e6); /* Fondo con un cambio sutil al hacer hover */
+}
+
+.iconButton {
+	padding: 1rem;
+	border-radius: 50%;
+	color: white;
+	background-color: #007bff; /* Azul para mayor contraste */
+	transition: transform 0.3s, box-shadow 0.3s;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Sombra para el ícono */
+}
+
+.iconButton:hover {
+	transform: scale(1.1);
+	box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3); /* Sombra más profunda */
+	background-color: #0056b3; /* Azul más oscuro para indicar interacción */
+}
+
+.formName {
+	font-weight: bold;
+	color: #1d2d50; /* Azul oscuro para mejor contraste sobre el fondo claro */
+	font-size: 1.6rem;
+	text-align: center;
+}
+
+.button {
+	width: 100%;
+	font-size: 1.2rem;
+	font-weight: bold;
+	color: white;
+	background-color: #28a745; /* Verde con buen contraste */
+	border-radius: 0.5rem;
+	transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.button:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3); /* Efecto flotante para el botón */
+	background-color: #218838; /* Verde más oscuro para el hover */
+}

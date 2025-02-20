@@ -1,34 +1,16 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import {
-	Box,
-	Button,
-	Dialog,
-	DialogActions,
-	DialogContent,
-	DialogTitle,
-	IconButton,
-	Typography,
-	TextField,
-	MenuItem,
-	Alert,
-	AlertTitle,
-	Table,
-	TableBody,
-	TableCell,
-	TableContainer,
-	TableHead,
-	TableRow,
-	Checkbox,
-} from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
+import { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
+import { Typography, TextField, MenuItem, Alert, AlertTitle, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Checkbox, } from "@mui/material";
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 import { fetchAllCustomers } from "@/services/customers.service";
 import { collectionAndBilling } from "@/services/transactions.service";
 import { searchAllCustomerRemitos } from "@/services/remitos.service";
 import { capitalize } from "@/util/formatter";
 import generateKey from "@/util/generateKey";
+import { FacturationGenerateModal } from "@/components/informes/facturationGenerateModal";
 
 const renderClientes = (clientes) => {
 	return clientes.map((cliente) => (
@@ -99,18 +81,21 @@ const useFetchDataClient = () => {
 	return { clientes, isClientsLoaded };
 };
 
-export const CobranzaModal = ({ open, handleClose }) => {
+export const CobranzaModal = ({ clientId = null, open, handleClose }) => {
 	const { clientes, isClientsLoaded } = useFetchDataClient();
 	const [isRemitoLoaded, setIsRemitoLoaded] = useState(false);
 
 	const [remitos, setRemitos] = useState([]);
 	const [totalDebt, setTotalDebt] = useState(0)
 
+	const [openGenerateFactura, setOpenGenerateFactura] = useState(false);
+	const [newFacturaId, setNewFacturaId] = useState(null);
+
 	const [alert, setAlert] = useState({ type: "", message: "", visible: false });
 
 	const { control, handleSubmit, reset, watch, setValue } = useForm({
 		defaultValues: {
-			cliente: "",
+			cliente: clientId ? clientId : "",
 			seleccionados: [],
 			pagosParciales: [],
 			billingRemito: [],
@@ -149,7 +134,7 @@ export const CobranzaModal = ({ open, handleClose }) => {
 
 	const showAlert = (type, message) => {
 		setAlert({ type, message, visible: true });
-		setTimeout(() => setAlert({ type: "", message: "", visible: false }), 4000);
+		setTimeout(() => setAlert({ type: "", message: "", visible: false }), 2000);
 	};
 
 	const handleSelectRemito = (id_remito) => {
@@ -195,7 +180,7 @@ export const CobranzaModal = ({ open, handleClose }) => {
 					);
 
 					setRemitos(remitosActualizados);
-					showAlert("success", `Pago parcial de $${pagoParcial.toFixed(2)} aplicado al remito Nº: ${id_remito}.`);
+					showAlert("success", `Pago parcial de ${pagoParcial.toFixed(0)} gs aplicado al remito Nº: ${id_remito}.`);
 
 				} else { showAlert("warning", `No tienes saldo suficiente para pagar el remito Nº: ${id_remito}.`); }
 			} else {
@@ -258,6 +243,11 @@ export const CobranzaModal = ({ open, handleClose }) => {
 		}
 	};
 
+	const handleCloseFacturaModal = () => {
+		setOpenGenerateFactura(!openGenerateFactura)
+		handleClose()
+	};
+
 	const handleModalClosure = () => {
 		reset();
 		setRemitos([]);
@@ -289,8 +279,10 @@ export const CobranzaModal = ({ open, handleClose }) => {
 		const billingData = { cliente, monto, billingRemito }
 
 		try {
-			const newClient = await collectionAndBilling(billingData);
-			showAlert("success", "El nuevo cliente ha sido agregado correctamente.");
+			const facturaId = await collectionAndBilling(billingData);
+			setNewFacturaId(facturaId);
+			setOpenGenerateFactura(true);
+			showAlert("success", "La facturacion se a realizado correctamente.");
 
 			// Limpiar formulario y cerrar modal después de un tiempo
 			setTimeout(() => {
@@ -298,135 +290,149 @@ export const CobranzaModal = ({ open, handleClose }) => {
 				setIsRemitoLoaded(false);
 				setRemitos([]);
 				setTotalDebt(0);
-				handleClose(newClient);
 			}, 3000);
 		} catch (error) {
 			console.error("Error al realizar la operacion:", error);
-			showAlert("error", "Hubo un problema al guardar el cliente.");
+			showAlert("error", "Hubo un problema al realizar la facturacion.");
 		}
 	};
 
 	return (
-		isClientsLoaded && (
-			<Dialog open={open} maxWidth="lg" fullWidth>
-				<DialogTitle>
-					<Typography sx={styles.DialogTitle}>
-						Registro Cobranza y Facturación de Remitos
-					</Typography>
-					<IconButton aria-label="close" onClick={handleModalClosure} sx={{ position: "absolute", right: 8, top: 8 }}>
-						<CloseIcon />
-					</IconButton>
-				</DialogTitle>
+		<>
+			{
+				isClientsLoaded && (
+					<Dialog open={open} maxWidth="lg" fullWidth>
+						<DialogTitle>
+							<Typography sx={styles.DialogTitle}>
+								Registro Cobranza y Facturación de Remitos
+							</Typography>
+							<IconButton aria-label="close" onClick={handleModalClosure} sx={{ position: "absolute", right: 8, top: 8 }}>
+								<CloseIcon />
+							</IconButton>
+						</DialogTitle>
 
-				<form onSubmit={handleSubmit(handleFormSubmit)}>
-					<DialogContent dividers>
+						<form onSubmit={handleSubmit(handleFormSubmit)}>
+							<DialogContent dividers>
 
-						{/* Selector de cliente */}
-						<Box display="flex" gap={1} mb={2}>
-							<Controller
-								name="cliente"
-								control={control}
-								render={({ field }) => (
-									<TextField
-										{...field}
-										label="Cliente"
-										select
-										fullWidth
-										slotProps={{
-											input: { readOnly: seleccionados.length === 0 ? false : true },
-										}}
-										onClick={handleClickOnInputs}
-									>
-										{clientes.length === 0 ? (
-											<MenuItem disabled>
-												No hay clientes disponibles. Crea uno nuevo.
-											</MenuItem>
-										) : (
-											renderClientes(clientes)
+								{/* Selector de cliente */}
+								<Box display="flex" gap={1} mb={2}>
+									<Controller
+										name="cliente"
+										control={control}
+										render={({ field }) => (
+											<TextField
+												{...field}
+												label="Cliente"
+												select
+												fullWidth
+												slotProps={{
+													input: { readOnly: seleccionados.length === 0 ? false : true },
+												}}
+												onClick={handleClickOnInputs}
+											>
+												{clientes.length === 0 ? (
+													<MenuItem disabled>
+														No hay clientes disponibles. Crea uno nuevo.
+													</MenuItem>
+												) : (
+													renderClientes(clientes)
+												)}
+
+											</TextField>
 										)}
-
-									</TextField>
-								)}
-							/>
-						</Box>
-
-						{/* Campo de monto */}
-						<Box mb={2}>
-							<Controller
-								name="monto"
-								control={control}
-								render={({ field }) => (
-									<TextField
-										{...field}
-										label="Monto a pagar"
-										type="number"
-										fullWidth
-										slotProps={{
-											input: { readOnly: seleccionados.length === 0 ? false : true },
-											htmlInput: { min: 0 },
-										}}
-										onClick={handleClickOnInputs}
 									/>
+								</Box>
+
+								{/* Campo de monto */}
+								<Box mb={2}>
+									<Controller
+										name="monto"
+										control={control}
+										render={({ field }) => (
+											<TextField
+												{...field}
+												label="Monto a pagar"
+												type="number"
+												fullWidth
+												slotProps={{
+													input: { readOnly: seleccionados.length === 0 ? false : true },
+													htmlInput: { min: 0 },
+												}}
+												onClick={handleClickOnInputs}
+											/>
+										)}
+									/>
+								</Box>
+
+								{isRemitoLoaded && (
+									<Box>
+										{/* Tabla de remitos */}
+										<TableContainer>
+											<Table>
+												<TableHead>
+													<TableRow>
+														<TableCell>Seleccionar</TableCell>
+														<TableCell>Nº Remito</TableCell>
+														<TableCell>Fecha</TableCell>
+														<TableCell>Monto Restante</TableCell>
+														<TableCell>Monto Total</TableCell>
+														<TableCell>Estado</TableCell>
+													</TableRow>
+												</TableHead>
+												<TableBody>{renderRemitos(remitos, seleccionados, handleSelectRemito)}</TableBody>
+											</Table>
+										</TableContainer>
+
+										{/* Resumen */}
+										{
+											remitos.length > 0 && (
+												!alert.visible ? (
+													<Box display="flex" gap={2} mt={2}>
+														<Typography variant="subtitle1">
+															Deuda Total: {totalDebt} ₲
+														</Typography>
+														<Typography variant="subtitle1">
+															Deuda Restante: {(totalDebt - (monto - montoRestante))} ₲
+														</Typography>
+														<Typography variant="subtitle1">
+															Monto Abonado Restante: {montoRestante} ₲
+														</Typography>
+													</Box>
+												) : (
+													renderAlert(alert)
+												)
+											)
+										}
+									</Box>
 								)}
-							/>
-						</Box>
+							</DialogContent>
 
-						{isRemitoLoaded && (
-							<Box>
-								{/* Tabla de remitos */}
-								<TableContainer>
-									<Table>
-										<TableHead>
-											<TableRow>
-												<TableCell>Seleccionar</TableCell>
-												<TableCell>Nº Remito</TableCell>
-												<TableCell>Fecha</TableCell>
-												<TableCell>Monto Restante</TableCell>
-												<TableCell>Monto Total</TableCell>
-												<TableCell>Estado</TableCell>
-											</TableRow>
-										</TableHead>
-										<TableBody>{renderRemitos(remitos, seleccionados, handleSelectRemito)}</TableBody>
-									</Table>
-								</TableContainer>
+							{(!alert.visible && remitos.length > 0) && (
+								<DialogActions>
+									<Button onClick={handleModalClosure} color="inherit">
+										Cancelar
+									</Button>
+									<Button type="submit" variant="contained" color="primary">
+										Registrar
+									</Button>
+								</DialogActions>
+							)}
+						</form>
+					</Dialog>
+				)
+			}
+			{
+				openGenerateFactura && (
+					<FacturationGenerateModal
+						open={openGenerateFactura}
+						handleClose={handleCloseFacturaModal}
+						targetId={newFacturaId}
+						facturaType={"venta"}
+					/>
+				)
+			}
 
-								{/* Resumen */}
-								{
-									remitos.length > 0 && (
-										!alert.visible ? (
-											<Box display="flex" gap={2} mt={2}>
-												<Typography variant="subtitle1">
-													Deuda Total: {totalDebt} ₲
-												</Typography>
-												<Typography variant="subtitle1">
-													Deuda Restante: {(totalDebt - (monto - montoRestante))} ₲
-												</Typography>
-												<Typography variant="subtitle1">
-													Monto Abonado Restante: {montoRestante} ₲
-												</Typography>
-											</Box>
-										) : (
-											renderAlert(alert)
-										)
-									)
-								}
-							</Box>
-						)}
-					</DialogContent>
-
-					{(!alert.visible && remitos.length > 0) && (
-						<DialogActions>
-							<Button onClick={handleModalClosure} color="inherit">
-								Cancelar
-							</Button>
-							<Button type="submit" variant="contained" color="primary">
-								Registrar
-							</Button>
-						</DialogActions>
-					)}
-				</form>
-			</Dialog>
-		)
+		</>
 	);
 };
 

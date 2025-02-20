@@ -20,26 +20,45 @@ export function LoginForm() {
 	const [open, setOpen] = useState(false);
 	const router = useRouter();
 
+	// Handlers for Forgot Password Modal
 	const handleClickOpen = () => setOpen(true);
 	const handleClose = () => setOpen(false);
 
-	const validateInputs = (data) => {
+	// Validates the form inputs
+	const validateInputs = ({ email, password }) => {
 		const newErrors = {};
-		if (!data.email || !/\S+@\S+\.\S+/.test(data.email)) {
+
+		if (!email || !/\S+@\S+\.\S+/.test(email)) {
 			newErrors.email = "Por favor ingrese una dirección de email válida";
 		}
-		if (!data.password || data.password.length < 6) {
-			newErrors.password = "La contraseña debe de tener como mínimo 6 caracteres de longitud";
+		if (!password || password.length < 6) {
+			newErrors.password = "La contraseña debe tener como mínimo 6 caracteres";
 		}
+
 		setErrors(newErrors);
 		return Object.keys(newErrors).length === 0;
 	};
 
+	// Handles form submission
 	const handleSubmit = async (event) => {
 		event.preventDefault();
 
-		const formData = new FormData(event.currentTarget);
+		const urlList = [
+			"/panel",
+			"/remitos",
+			"/productos",
+			"/customers",
+			"/user_of_system",
+			"/proveedores",
+			"/informes",
+			"/caja",
+			"/auditoria",
+			"/facturas",
+		];
+		const savedItem = sessionStorage.getItem("selectedSidebarItem");
+		const lastPage = savedItem ? urlList[parseInt(savedItem, 10)] : urlList[0];
 
+		const formData = new FormData(event.currentTarget);
 		const data = {
 			email: formData.get("email"),
 			password: formData.get("password"),
@@ -48,13 +67,12 @@ export function LoginForm() {
 		if (!validateInputs(data)) return;
 
 		try {
-			const response = await login(data);
-			// if (!response.ok) throw new Error(response.message || "Error al iniciar sesión");
-			router.push("/panel");
+			await login(data);
+			router.push(lastPage);
 		} catch (error) {
 			setErrors((prevErrors) => ({
 				...prevErrors,
-				session: error || "Error inesperado. Intente nuevamente.",
+				session: error.message || "Error inesperado. Intente nuevamente.",
 			}));
 		}
 	};
@@ -66,7 +84,7 @@ export function LoginForm() {
 			</Typography>
 
 			<Box component="form" onSubmit={handleSubmit} noValidate className={styles.form}>
-
+				{/* Email Input */}
 				<FormControl className={styles.input}>
 					<FormLabel htmlFor="email">Email</FormLabel>
 					<TextField
@@ -81,6 +99,7 @@ export function LoginForm() {
 					/>
 				</FormControl>
 
+				{/* Password Input */}
 				<FormControl>
 					<Box sx={{ display: "flex", justifyContent: "space-between" }}>
 						<FormLabel htmlFor="password">Password</FormLabel>
@@ -105,14 +124,17 @@ export function LoginForm() {
 					/>
 				</FormControl>
 
+				{/* Error Message */}
 				{errors.session && (
 					<Typography variant="body2" color="error" className={styles.errorMessage}>
 						{errors.session}
 					</Typography>
 				)}
 
+				{/* Forgot Password Modal */}
 				<ForgotPasswordModal open={open} handleClose={handleClose} />
 
+				{/* Submit Button */}
 				<Button type="submit" fullWidth variant="contained" className={styles.button}>
 					Ingresar
 				</Button>

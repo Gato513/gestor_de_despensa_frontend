@@ -14,8 +14,8 @@ export const searchAllCustomerRemitos = async (clientId) => {
 
 //@ Obtener un remito por su ID:
 export const fetchRemitoById = async (id) => {
-    const response = await api.get(`/remitos/${id}`);
-    return response.data;
+    const { data } = await api.get(`/remitos/${id}`);
+    return data;
 };
 
 //$ Crear un remito:
@@ -24,16 +24,10 @@ export const createRemito = async (remitoData) => {
     return
 };
 
-//% Actualizar un remito:
-export const updateRemito = async (id, data) => {
-    const response = await api.put(`/remitos/${id}`, data);
-    return response.data;
-};
-
 //! Eliminar un remito:
 export const deleteRemito = async (id) => {
-    const response = await api.delete(`/remitos/${id}`);
-    return response.data;
+    const { data } = await api.delete(`/remitos/${id}`);
+    return data;
 };
 
 //& Cobranza y Facturacion de Remitos:

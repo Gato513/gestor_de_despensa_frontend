@@ -20,8 +20,10 @@ import {
 	Paper,
 	Alert,
 	AlertTitle,
+	Tooltip,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
 import AddIcon from '@mui/icons-material/Add';
@@ -33,6 +35,7 @@ import { fetchAllProveedores } from "@/services/proveedores.service";
 import { CreateProductoModal } from "@/components/modals/mainModals/createProductModal";
 import { CreateProveedorModal } from "@/components/modals/mainModals/createProveedorModal";
 import generateKey from "@/util/generateKey";
+import { FacturationGenerateModal } from "@/components/informes/facturationGenerateModal";
 
 // Función auxiliar para calcular el total de productos seleccionados
 const calcularTotal = (productos) => {
@@ -83,14 +86,14 @@ const RenderLossWarning = ({ precioCompra, precioVenta }) => {
 			<Typography variant="body1">
 				Esto genera una pérdida de{" "}
 				<strong>
-					{`$${(precioCompra - precioVenta).toFixed(0)}`}
+					{`${(precioCompra - precioVenta).toFixed(0)} gs`}
 				</strong>. Por favor, revisa los precios para evitar pérdidas económicas.
 			</Typography>
 		</Box>
 	);
 };
 
-const TablaProductosSeleccionados = ({ productosSeleccionados, calcularTotal }) => {
+const TablaProductosSeleccionados = ({ productosSeleccionados, calcularTotal, deleteListItem }) => {
 	if (productosSeleccionados.length === 0) {
 		return null; // Si no hay productos seleccionados, no se muestra nada
 	}
@@ -100,6 +103,7 @@ const TablaProductosSeleccionados = ({ productosSeleccionados, calcularTotal }) 
 			<Table>
 				<TableHead>
 					<TableRow>
+						<TableCell>Accion</TableCell>
 						<TableCell>Producto</TableCell>
 						<TableCell>Cantidad</TableCell>
 						<TableCell>Stock Actual</TableCell>
@@ -110,6 +114,13 @@ const TablaProductosSeleccionados = ({ productosSeleccionados, calcularTotal }) 
 				<TableBody>
 					{productosSeleccionados.map((producto, index) => (
 						<TableRow key={generateKey(index)}>
+							<TableCell>
+								<Tooltip title={"Eliminar"}>
+									<IconButton color={"error"} onClick={() => deleteListItem(producto.id_producto)}>
+										<DeleteIcon />
+									</IconButton>
+								</Tooltip>
+							</TableCell>
 							<TableCell>{producto.nombre_producto}</TableCell>
 							<TableCell>{producto.cantidad}</TableCell>
 							<TableCell>{producto.stock_disponible + producto.cantidad}</TableCell>
@@ -118,11 +129,14 @@ const TablaProductosSeleccionados = ({ productosSeleccionados, calcularTotal }) 
 						</TableRow>
 					))}
 					<TableRow>
-						<TableCell colSpan={4} align="right">
-							<Typography fontWeight="bold">Total</Typography>
+						<TableCell colSpan={5} align="right">
+							<Typography sx={{ fontWeight: 1000 }}>Total:</Typography>
 						</TableCell>
-						<TableCell>{calcularTotal(productosSeleccionados).toFixed(2)} gs</TableCell>
+						<TableCell>
+							<Typography sx={{ fontWeight: 1000 }}>{calcularTotal(productosSeleccionados).toFixed(0)} gs</Typography>
+						</TableCell>
 					</TableRow>
+
 				</TableBody>
 			</Table>
 		</TableContainer>
@@ -162,9 +176,13 @@ export const ProductBillingModal = ({ open, handleClose }) => {
 	const precioCompra = parseInt(watch("precioCompra"));
 
 	const [alert, setAlert] = useState({ type: "", message: "", visible: false });
+	const [editable, setEditable] = useState(false);
+
 	const [openProveedorModal, setOpenProveedorModal] = useState(false);
 	const [openProductModal, setOpenProductModal] = useState(false);
-	const [editable, setEditable] = useState(false);
+	const [openGenerateFactura, setOpenGenerateFactura] = useState(false);
+
+	const [newFacturaId, setNewFacturaId] = useState(null);
 
 	useEffect(() => {
 		if (!productoActualID) return;
@@ -197,6 +215,13 @@ export const ProductBillingModal = ({ open, handleClose }) => {
 			setValue("proveedor", newProveedor.id_proveedor);
 		}
 		setOpenProveedorModal(!openProveedorModal);
+	};
+
+	const toggleFacturaModal = () => {
+		setOpenGenerateFactura(!openGenerateFactura)
+		handleClose()
+		// Refrescar la página
+		window.location.reload();
 	};
 
 	// Agregar producto a la lista de productos seleccionados
@@ -255,6 +280,15 @@ export const ProductBillingModal = ({ open, handleClose }) => {
 		setEditable(false);
 	};
 
+	const deleteListItem = (idElement) => {
+		// Filtrar el producto a eliminar de la lista de productos seleccionados
+		const updatedProductosSeleccionados = productosSeleccionados.filter(
+			(producto) => producto.id_producto !== idElement
+		);
+		// Actualizar el estado del formulario con la nueva lista
+		setValue("productosSeleccionados", updatedProductosSeleccionados);
+	};
+
 	// Manejo del envío del formulario
 	const handleSubmitForm = async ({ proveedor, productosSeleccionados }) => {
 		if (!proveedor || productosSeleccionados.length === 0) {
@@ -276,13 +310,13 @@ export const ProductBillingModal = ({ open, handleClose }) => {
 		};
 
 		try {
-			await PurchaseProduct(purchaseData);
+			const facturaId = await PurchaseProduct(purchaseData);
+			setNewFacturaId(facturaId);
+			setOpenGenerateFactura(true);
 			showAlert("success", "La factura se ha creado correctamente.");
 			setTimeout(() => {
 				reset();
 				handleClose();
-				// Refrescar la página
-				window.location.reload();
 			}, 3000);
 		} catch (error) {
 			console.error("Error al guardar factura:", error);
@@ -449,7 +483,7 @@ export const ProductBillingModal = ({ open, handleClose }) => {
 							)}
 
 							{/* Tabla de productos seleccionados */}
-							<TablaProductosSeleccionados productosSeleccionados={productosSeleccionados} calcularTotal={calcularTotal} />
+							<TablaProductosSeleccionados productosSeleccionados={productosSeleccionados} calcularTotal={calcularTotal} deleteListItem={deleteListItem} />
 
 						</DialogContent>
 
@@ -469,6 +503,17 @@ export const ProductBillingModal = ({ open, handleClose }) => {
 				{/* Modales */}
 				{openProductModal && <CreateProductoModal open={openProductModal} handleClose={toggleProductModal} />}
 				{openProveedorModal && <CreateProveedorModal open={openProveedorModal} handleClose={toggleProveedorModal} />}
+
+				{
+					openGenerateFactura && (
+						<FacturationGenerateModal
+							open={openGenerateFactura}
+							handleClose={toggleFacturaModal}
+							targetId={newFacturaId}
+							facturaType={"compra"}
+						/>
+					)
+				}
 			</>
 		)
 	);

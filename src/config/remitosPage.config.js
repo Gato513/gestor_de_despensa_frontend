@@ -1,19 +1,5 @@
 import { formatAsOption } from "@/util/formatter";
 
-// Configuración para columnas
-export const accessToRows = [
-    "id", "cliente", "fecha_remito", "monto_total", "saldo_restante", "estado"
-];
-
-export const headOfColumns = [
-    { id: 'id', label: 'Id', },
-    { id: 'cliente', label: 'Nombre cliente', },
-    { id: 'fecha_remito', label: 'Fecha remito', },
-    { id: 'monto_total', label: 'Monto total', },
-    { id: 'saldo_restante', label: 'Saldo restante', },
-    { id: 'estado', label: 'Estado', },
-];
-
 // Inputs por defecto del filtro:
 const defaulInput = [
     {
@@ -34,7 +20,7 @@ export const defaultFilterConfig = {
     },
     accessFilterValues: ["cliente", "fecha_remito", "estado"],
     inputs: [...defaulInput],
-    filterName: "Lista de productos"
+    filterName: "Lista de Remitos"
 };
 
 // Generacion dinamica de input para filtros:
@@ -44,4 +30,25 @@ export const generateDynamicInputs = (rows) => [
 ];
 
 
+// Configuración para Tabla:
+export const accessToRows = [
+    "id", "cliente", "fecha_remito", "monto_total", "saldo_restante", "estado"
+];
 
+export const headOfColumns = [
+    { id: 'id', label: 'Nº Remito', },
+    { id: 'cliente', label: 'Nombre cliente', },
+    { id: 'fecha_remito', label: 'Fecha remito', },
+    { id: 'monto_total', label: 'Monto total', },
+    { id: 'saldo_restante', label: 'Saldo restante', },
+    { id: 'estado', label: 'Estado', },
+    { id: '', label: 'Acciones', },
+];
+
+
+// Configuración botones de accion:
+export const bottonActionConfig = {
+    allowedButtons: ["details",],
+    accessId: "id",
+    page: "remito"
+}

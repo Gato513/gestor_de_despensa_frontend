@@ -18,80 +18,37 @@ import {
 
 import {
 	Menu as MenuIcon,
-	DashboardOutlined as DashboardOutlinedIcon,
-	ReceiptLongOutlined as ReceiptLongOutlinedIcon,
-	Inventory2Outlined as Inventory2OutlinedIcon,
-	GroupOutlined as GroupOutlinedIcon,
-	LocalShippingOutlined as LocalShippingOutlinedIcon,
-	BarChartOutlined as BarChartOutlinedIcon,
-	AccountBalanceOutlined as AccountBalanceOutlinedIcon,
-	LogoutOutlined as LogoutOutlinedIcon,
+	DashboardOutlined,
+	LocalShippingOutlined,
+	InventoryOutlined,
+	PeopleOutline,
+	AdminPanelSettingsOutlined,
+	StorefrontOutlined,
+	AssessmentOutlined,
+	PointOfSaleOutlined,
+	FactCheckOutlined,
+	RequestQuoteOutlined,
+	LogoutOutlined,
 } from "@mui/icons-material";
 
-import ManageAccountsOutlinedIcon from "@mui/icons-material/ManageAccountsOutlined";
 import { useUser } from "@/context/UserContext";
 import generateKey from "@/util/generateKey";
 
-// Lista de ítems del menú
+// Lista de ítems del menú con iconos mejorados
 const menuItems = [
-	{
-		text: "Panel",
-		icon: <DashboardOutlinedIcon />,
-		link: "/panel",
-		roles: ["admin", "cajero"]
-
-	},
-	{
-		text: "Remitos",
-		icon: <ReceiptLongOutlinedIcon />,
-		link: "/remitos",
-		roles: ["admin"]
-
-	},
-	{
-		text: "Productos",
-		icon: <Inventory2OutlinedIcon />,
-		link: "/productos",
-		roles: ["admin"]
-
-	},
-	{
-		text: "Clientes",
-		icon: <GroupOutlinedIcon />,
-		link: "/customers",
-		roles: ["admin"]
-
-	},
-	{
-		text: "Usuarios",
-		icon: <ManageAccountsOutlinedIcon />,
-		link: "/user_of_system",
-		roles: ["admin"]
-
-	},
-	{
-		text: "Proveedores",
-		icon: <LocalShippingOutlinedIcon />,
-		link: "/proveedores",
-		roles: ["admin"]
-
-	},
-	{
-		text: "Informes",
-		icon: <BarChartOutlinedIcon />,
-		link: "/informes",
-		roles: ["admin"]
-
-	},
-	{
-		text: "Caja",
-		icon: <AccountBalanceOutlinedIcon />,
-		link: "/caja",
-		roles: ["admin"]
-
-	},
+	{ text: "Panel", icon: <DashboardOutlined />, link: "/panel", roles: ["admin", "cajero"] },
+	{ text: "Remitos", icon: <LocalShippingOutlined />, link: "/remitos", roles: ["admin"] },
+	{ text: "Productos", icon: <InventoryOutlined />, link: "/productos", roles: ["admin"] },
+	{ text: "Clientes", icon: <PeopleOutline />, link: "/customers", roles: ["admin"] },
+	{ text: "Usuarios", icon: <AdminPanelSettingsOutlined />, link: "/user_of_system", roles: ["admin"] },
+	{ text: "Proveedores", icon: <StorefrontOutlined />, link: "/proveedores", roles: ["admin"] },
+	{ text: "Informes", icon: <AssessmentOutlined />, link: "/informes", roles: ["admin"] },
+	{ text: "Caja", icon: <PointOfSaleOutlined />, link: "/caja", roles: ["admin"] },
+	{ text: "Auditorias", icon: <FactCheckOutlined />, link: "/auditoria", roles: ["admin"] },
+	{ text: "Facturas", icon: <RequestQuoteOutlined />, link: "/facturas", roles: ["admin"] },
 ];
 
+// Renderizado del menú de navegación
 const renderMenuList = (items, selectedItem, user, handleItemClick) => {
 	return items.map((item, index) => {
 		const isSelected = selectedItem === index;
@@ -115,23 +72,12 @@ const renderMenuList = (items, selectedItem, user, handleItemClick) => {
 					}}
 					disabled={isDisabled}
 				>
-					<ListItemIcon
-						sx={{
-							...styles.listItemIcon,
-							color: isDisabled ? "#BDBDBD" : isSelected ? "#4a32a8" : "#664ddf",
-						}}
-					>
+					<ListItemIcon sx={{ color: isDisabled ? "#BDBDBD" : isSelected ? "#4a32a8" : "#664ddf" }}>
 						{item.icon}
 					</ListItemIcon>
 					<ListItemText
 						primary={
-							<Typography
-								variant="body1"
-								sx={{
-									fontWeight: isSelected ? "bold" : "normal",
-									color: isDisabled ? "#BDBDBD" : "inherit",
-								}}
-							>
+							<Typography variant="body1" sx={{ fontWeight: isSelected ? "bold" : "normal", color: isDisabled ? "#BDBDBD" : "inherit" }}>
 								{item.text}
 							</Typography>
 						}
@@ -140,7 +86,7 @@ const renderMenuList = (items, selectedItem, user, handleItemClick) => {
 			</ListItem>
 		);
 	});
-}
+};
 
 export const Sidebar = () => {
 	const drawerWidth = 300;
@@ -148,61 +94,40 @@ export const Sidebar = () => {
 	const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 	const [open, setOpen] = useState(false);
 	const [selectedItem, setSelectedItem] = useState(null);
-
 	const { user } = useUser();
 
-	// Recuperar el estado del ítem seleccionado desde sessionStorage
 	useEffect(() => {
 		const savedItem = sessionStorage.getItem("selectedSidebarItem");
-		if (savedItem) {
-			setSelectedItem(parseInt(savedItem, 10)); // Convierte a número
-		} else {
-			setSelectedItem(0); // Selecciona el primer ítem (índice 0) por defecto
-			sessionStorage.setItem("selectedSidebarItem", 0); // Guarda en sessionStorage
-		}
+		setSelectedItem(savedItem ? parseInt(savedItem, 10) : 0);
 	}, []);
 
-	// Manejar clic y guardar en sessionStorage
 	const handleItemClick = (index, disabled) => {
-		if (disabled) return; // No hacer nada si el botón está deshabilitado
+		if (disabled) return;
 		setSelectedItem(index);
-		sessionStorage.setItem("selectedSidebarItem", index); // Guarda en sessionStorage
+		sessionStorage.setItem("selectedSidebarItem", index);
 	};
 
 	const handleDrawerToggle = () => setOpen(!open);
 
-	if (!user) {
-		return null;
-	}
+	if (!user) return null;
 
 	return (
 		<>
 			{isMobile && (
-				<IconButton
-					edge="start"
-					color="inherit"
-					onClick={handleDrawerToggle}
-					sx={styles.menuIconButton}
-				>
+				<IconButton edge="start" color="inherit" onClick={handleDrawerToggle} sx={styles.menuIconButton}>
 					<MenuIcon />
 				</IconButton>
 			)}
 
 			<Drawer
-				sx={{
-					...styles.drawer,
-					"& .MuiDrawer-paper": {
-						...styles.drawerPaper,
-						width: drawerWidth,
-					},
-				}}
+				sx={{ ...styles.drawer, "& .MuiDrawer-paper": { ...styles.drawerPaper, width: drawerWidth } }}
 				variant={isMobile ? "temporary" : "permanent"}
 				anchor="left"
 				open={isMobile ? open : true}
 				onClose={handleDrawerToggle}
 			>
 				<Box sx={styles.drawerContent}>
-					<Box component={Link} href="/">
+					<Box>
 						<Box component="img" src="/assets/logo.png" alt="Logo" sx={styles.logo} />
 					</Box>
 
@@ -213,21 +138,12 @@ export const Sidebar = () => {
 					<Divider />
 
 					<Box sx={styles.userSection}>
-						<Box
-							component="img"
-							src="/assets/AvatarSidebar.png"
-							alt="Avatar"
-							sx={styles.userAvatar}
-						/>
-
+						<Box component="img" src="/assets/AvatarSidebar.png" alt="Avatar" sx={styles.userAvatar} />
 						<Box>
-							<Typography variant="body1" sx={styles.userName}>
-								{user.nombre_usuario}
-							</Typography>
+							<Typography variant="body1" sx={styles.userName}>{user.nombre_usuario}</Typography>
 						</Box>
-
 						<IconButton sx={styles.logoutButton}>
-							<LogoutOutlinedIcon />
+							<LogoutOutlined />
 						</IconButton>
 					</Box>
 				</Box>
@@ -237,62 +153,15 @@ export const Sidebar = () => {
 };
 
 const styles = {
-	menuIconButton: {
-		mr: 2,
-		display: { sm: "none" },
-	},
-	drawer: {
-		width: 300,
-		flexShrink: 0,
-	},
-	drawerPaper: {
-		boxSizing: "border-box",
-		backgroundColor: "#f1eefe",
-		border: 0,
-		padding: 2,
-		overflow: "hidden",
-	},
-	drawerContent: {
-		display: "flex",
-		flexDirection: "column",
-		gap: 1,
-	},
-	logo: {
-		height: 50,
-		width: "100%",
-	},
-	menuList: {
-		display: "flex",
-		flexDirection: "column",
-		gap: 1,
-	},
-	listItemButton: {
-		justifyContent: "flex-start",
-		borderRadius: 2,
-		padding: 1.8,
-	},
-	listItemIcon: {},
-	userSection: {
-		display: "flex",
-		alignItems: "center",
-		gap: 1,
-		p: 2,
-		borderRadius: 2,
-		backgroundColor: "#e8eaf6",
-	},
-	userAvatar: {
-		height: 40,
-		borderRadius: "50%",
-		backgroundColor: "#D6C6F5",
-		padding: 1,
-	},
-	userName: {
-		fontWeight: "bold",
-		color: "#4a32a8",
-		fontSize: "0.9rem",
-	},
-	logoutButton: {
-		marginLeft: "auto",
-		color: "#4a32a8",
-	},
+	menuIconButton: { mr: 2, display: { sm: "none" } },
+	drawer: { width: 300, flexShrink: 0 },
+	drawerPaper: { boxSizing: "border-box", backgroundColor: "#f1eefe", border: 0, padding: 2, overflow: "hidden" },
+	drawerContent: { display: "flex", flexDirection: "column", gap: 1 },
+	logo: { height: 40, width: "100%" },
+	menuList: { display: "flex", flexDirection: "column", gap: 1 },
+	listItemButton: { justifyContent: "flex-start", borderRadius: 2, padding: 1 },
+	userSection: { display: "flex", alignItems: "center", gap: 1, p: 1, borderRadius: 2, backgroundColor: "#e8eaf6" },
+	userAvatar: { height: 35, borderRadius: "50%", backgroundColor: "#D6C6F5", padding: 1 },
+	userName: { fontWeight: "bold", color: "#4a32a8", fontSize: "0.88rem", whiteSpace: "nowrap" },
+	logoutButton: { marginLeft: "auto", color: "#4a32a8" },
 };

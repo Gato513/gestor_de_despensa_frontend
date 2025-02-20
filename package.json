@@ -9,24 +9,26 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@date-io/dayjs": "^3.2.0",
-    "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.0",
-    "@mui/icons-material": "^6.1.10",
-    "@mui/lab": "^6.0.0-beta.23",
-    "@mui/material": "^6.2.0",
-    "@mui/x-date-pickers": "^7.24.0",
-    "@mui/x-date-pickers-pro": "^7.24.0",
-    "axios": "^1.7.9",
-    "date-fns": "^4.1.0",
-    "dayjs": "^1.11.13",
-    "next": "^15.1.5",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-hook-form": "^7.54.1"
+    "@date-io/dayjs": "3.2.0",
+    "@emotion/react": "11.14.0",
+    "@emotion/styled": "11.14.0",
+    "@mui/icons-material": "6.1.10",
+    "@mui/lab": "6.0.0-beta.23",
+    "@mui/material": "6.2.0",
+    "@mui/x-date-pickers": "7.24.0",
+    "@mui/x-date-pickers-pro": "7.24.0",
+    "axios": "1.7.9",
+    "chart.js": "4.4.7",
+    "date-fns": "4.1.0",
+    "dayjs": "1.11.13",
+    "next": "15.1.5",
+    "pdfmake": "0.2.18",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "react-hook-form": "7.54.1"
   },
   "devDependencies": {
-    "eslint": "^8",
+    "eslint": "8",
     "eslint-config-next": "15.0.4"
   }
 }

@@ -5,55 +5,87 @@ import { useFetchData } from "@/hooks/fetch_initial_data";
 import { DynamicFilter } from "@/components/filters/dynamicFilter";
 import { fetchAllRemitos } from "@/services/remitos.service";
 import { ProgressIndicator } from "@/components/progressIndicator/progressIndicator";
-import { accessToRows, defaultFilterConfig, headOfColumns, generateDynamicInputs } from "@/config/remitosPage.config";
+import { accessToRows, defaultFilterConfig, headOfColumns, generateDynamicInputs, bottonActionConfig } from "@/config/remitosPage.config";
+import { disguiseRow, editRow } from "@/util/rowUtils";
+import { confirmAccessRoute } from "@/util/confirmRouteAccess";
 
 const RemitosPage = () => {
     const { user } = useUser();
-    const { rows, isLoaded } = useFetchData(fetchAllRemitos);
-    const [dynamicFilterConfig, setDynamicFilterConfig] = useState(defaultFilterConfig);
 
-    useEffect(() => {
-        if (!isLoaded || rows.length === 0) return;
+    if (user && confirmAccessRoute(user.role)) {
+        const { rows: initialRows, isLoaded } = useFetchData(fetchAllRemitos);
+        const [rows, setRows] = useState([]);
+        const [dynamicFilterConfig, setDynamicFilterConfig] = useState(defaultFilterConfig);
 
-        const inputsToAdd = generateDynamicInputs(rows);
+        useEffect(() => {
+            if (isLoaded && initialRows.length > 0) {
+                setRows(initialRows);
+            }
+        }, [isLoaded, initialRows]);
 
-        setDynamicFilterConfig(prevConfig => {
-            const existingInputs = new Set(prevConfig.inputs.map(input => input.name));
+        const handleModifyRows = ({ typeOfAction, rowElementId, objetoToEdit = null }) => {
+            const { accessId } = bottonActionConfig;
 
-            const newInputs = inputsToAdd
-                .filter(input => !existingInputs.has(input.name))
-                .map(input => ({
-                    ...input,
-                    required: false,
-                    type: "dropdownMenu",
-                    inputWidth: null,
-                }));
-
-            if (newInputs.length === 0) return prevConfig;
-
-            return {
-                ...prevConfig,
-                inputs: [...newInputs, ...prevConfig.inputs],
+            const actions = {
+                disguise: () => setRows((prevRows) => disguiseRow(prevRows, accessId, rowElementId)),
+                edit: () => setRows((prevRows) => editRow(prevRows, accessId, rowElementId, objetoToEdit)),
             };
-        });
-    }, [isLoaded, rows]);
 
-    if (!user) {
-        return <ProgressIndicator color="success" size={8} />;
+            const actionHandler = actions[typeOfAction];
+            if (actionHandler) {
+                actionHandler();
+            } else {
+                console.error(`Acción no soportada: ${typeOfAction}`);
+            }
+        };
+
+        useEffect(() => {
+            if (!isLoaded || rows.length === 0) return;
+
+            const inputsToAdd = generateDynamicInputs(rows);
+
+            setDynamicFilterConfig(prevConfig => {
+                const existingInputs = new Set(prevConfig.inputs.map(input => input.name));
+
+                const newInputs = inputsToAdd
+                    .filter(input => !existingInputs.has(input.name))
+                    .map(input => ({
+                        ...input,
+                        required: false,
+                        type: "dropdownMenu",
+                        inputWidth: null,
+                    }));
+
+                if (newInputs.length === 0) return prevConfig;
+
+                return {
+                    ...prevConfig,
+                    inputs: [...newInputs, ...prevConfig.inputs],
+                };
+            });
+        }, [isLoaded, rows]);
+
+        if (!user) {
+            return <ProgressIndicator color="success" size={8} />;
+        }
+
+        if (!isLoaded) {
+            return <ProgressIndicator color="info" size={6} />;
+        }
+
+        return (
+            <DynamicFilter
+                filterConfig={dynamicFilterConfig}
+                rows={rows}
+                headOfColumns={headOfColumns}
+                accessToRows={accessToRows}
+                bottonConfig={bottonActionConfig}
+                handleModifyRows={handleModifyRows}
+            />
+        );
     }
 
-    if (!isLoaded) {
-        return <ProgressIndicator color="info" size={6} />;
-    }
-
-    return (
-        <DynamicFilter
-            filterConfig={dynamicFilterConfig}
-            rows={rows}
-            headOfColumns={headOfColumns}
-            accessToRows={accessToRows}
-        />
-    );
+    return <ProgressIndicator color="success" size={8} />;
 };
 
 export default RemitosPage;
