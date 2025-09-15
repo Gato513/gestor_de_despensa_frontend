@@ -395,7 +395,7 @@ export const CobranzaModal = ({ clientId = null, open, handleClose }) => {
 															Deuda Restante: {(totalDebt - (monto - montoRestante))} ₲
 														</Typography>
 														<Typography variant="subtitle1">
-															Monto Abonado Restante: {montoRestante} ₲
+															Monto Buelto: {montoRestante} ₲
 														</Typography>
 													</Box>
 												) : (
