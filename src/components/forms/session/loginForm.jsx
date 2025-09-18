@@ -3,26 +3,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { login } from "@/services/session.service";
 import styles from "./LoginForm.module.css";
-import {
-	Box,
-	Button,
-	FormLabel,
-	FormControl,
-	TextField,
-	Typography,
-	Card,
-	Link,
-} from "@mui/material";
-import { ForgotPasswordModal } from "@/components/modals/mainModals/forgotPassword";
+import { Box, Button, FormLabel, FormControl, TextField, Typography, Card } from "@mui/material";
 
 export function LoginForm() {
 	const [errors, setErrors] = useState({ email: "", password: "", session: "" });
-	const [open, setOpen] = useState(false);
+	const [editable, setEditable] = useState(false);
 	const router = useRouter();
-
-	// Handlers for Forgot Password Modal
-	const handleClickOpen = () => setOpen(true);
-	const handleClose = () => setOpen(false);
 
 	// Validates the form inputs
 	const validateInputs = ({ email, password }) => {
@@ -39,9 +25,13 @@ export function LoginForm() {
 		return Object.keys(newErrors).length === 0;
 	};
 
+	const handleButtonLock = () => setEditable(!editable);
+
 	// Handles form submission
 	const handleSubmit = async (event) => {
 		event.preventDefault();
+
+		handleButtonLock()
 
 		const urlList = [
 			"/panel",
@@ -55,6 +45,7 @@ export function LoginForm() {
 			"/auditoria",
 			"/facturas",
 		];
+		
 		const savedItem = sessionStorage.getItem("selectedSidebarItem");
 		const lastPage = savedItem ? urlList[parseInt(savedItem, 10)] : urlList[0];
 
@@ -74,8 +65,10 @@ export function LoginForm() {
 				...prevErrors,
 				session: error.message || "Error inesperado. Intente nuevamente.",
 			}));
+			handleButtonLock()
 		}
 	};
+
 
 	return (
 		<Card className={styles.card}>
@@ -103,15 +96,6 @@ export function LoginForm() {
 				<FormControl>
 					<Box sx={{ display: "flex", justifyContent: "space-between" }}>
 						<FormLabel htmlFor="password">Password</FormLabel>
-						<Link
-							component="button"
-							type="button"
-							onClick={handleClickOpen}
-							variant="body2"
-							className={styles.link}
-						>
-							¿Olvidaste tu contraseña?
-						</Link>
 					</Box>
 					<TextField
 						id="password"
@@ -131,11 +115,8 @@ export function LoginForm() {
 					</Typography>
 				)}
 
-				{/* Forgot Password Modal */}
-				<ForgotPasswordModal open={open} handleClose={handleClose} />
-
 				{/* Submit Button */}
-				<Button type="submit" fullWidth variant="contained" className={styles.button}>
+				<Button type="submit" fullWidth variant="contained" className={styles.button} disabled={editable}>
 					Ingresar
 				</Button>
 			</Box>
