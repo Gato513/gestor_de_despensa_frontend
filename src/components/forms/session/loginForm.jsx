@@ -61,11 +61,11 @@ export function LoginForm() {
 			await login(data);
 			router.push(lastPage);
 		} catch (error) {
+			handleButtonLock()
 			setErrors((prevErrors) => ({
 				...prevErrors,
 				session: error.message || "Error inesperado. Intente nuevamente.",
 			}));
-			handleButtonLock()
 		}
 	};
 
@@ -84,6 +84,7 @@ export function LoginForm() {
 						id="email"
 						name="email"
 						type="email"
+						defaultValue={"usuario@gmail.com"}
 						autoFocus
 						error={!!errors.email}
 						helperText={errors.email}
@@ -101,6 +102,7 @@ export function LoginForm() {
 						id="password"
 						name="password"
 						type="password"
+						defaultValue={"userPassword"}
 						error={!!errors.password}
 						helperText={errors.password}
 						required
